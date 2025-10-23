@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { useRouter } from "expo-router";
-import { login } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const COLORS = {
     azul: "#0451b8",
@@ -55,8 +55,13 @@ export default function LoginAtena({
         }
         try {
             setLoading(true);
-            const data = await login({ matricula: ..., password });
-            await authLogin(data); // seta user/token no contexto + AsyncStorage
+            const credentials = { matricula: matricula.trim(), password };
+
+            if (onLogin) {
+                await onLogin(credentials);
+            } else {
+                await authLogin(credentials);
+            }
             router.replace("/home");
         } catch (e) {
             setError(e?.message || "Não foi possível entrar. Tente novamente.");
