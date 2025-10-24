@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { useRouter } from "expo-router";
-import { login } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const COLORS = {
     azul: "#0451b8",
@@ -25,8 +25,6 @@ const COLORS = {
     textoErro: "#ff4d4f",
 };
 
-const isAndroid = Platform.OS === "android";
-const withGap = (value) => (isAndroid ? {} : { gap: value });
 
 export default function LoginAtena({
     onLogin,
@@ -37,6 +35,7 @@ export default function LoginAtena({
     privacyUrl = "https://atenas.edu.br/Atena/politica-privacidade",
 }) {
     const router = useRouter();
+    const { login: authLogin } = useAuth();
 
     const [matricula, setMatricula] = useState("");
     const [password, setPassword] = useState("");
@@ -44,8 +43,6 @@ export default function LoginAtena({
     const [error, setError] = useState(null);
 
     const canSubmit = matricula.trim().length > 0 && password.length >= 4 && !loading;
-
-    const { login: authLogin } = useAuth();
 
     const handleSubmit = async () => {
         setError(null);
@@ -55,8 +52,11 @@ export default function LoginAtena({
         }
         try {
             setLoading(true);
-            const data = await login({ matricula: ..., password });
-            await authLogin(data); // seta user/token no contexto + AsyncStorage
+            const credentials = { matricula: matricula.trim(), password };
+
+            const submit = typeof onLogin === "function" ? onLogin : authLogin;
+
+            await submit(credentials);
             router.replace("/home");
         } catch (e) {
             setError(e?.message || "Não foi possível entrar. Tente novamente.");
