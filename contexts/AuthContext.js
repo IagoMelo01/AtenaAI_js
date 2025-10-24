@@ -1,129 +1,63 @@
-import React, { createContext, useContext, useState } from "react";
-import { login as apiLogin, updateUserById } from "../lib/api";
+import { createContext, useContext, useMemo, useState } from "react";
+import {
+  fetchProfile,
+  login,
+  requestPasswordReset,
+  updateProfile as updateProfileApi,
+} from "../lib/api";
 
-const getFirstObject = (...values) => {
-  for (const value of values) {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      return value;
-    }
-  }
-  return null;
-};
-
-const normalizeAuthPayload = (payload = {}, { matricula, extra } = {}) => {
-  const trimmedMatricula =
-    typeof matricula === "string" ? matricula.trim() : matricula ?? null;
-
-  const token =
-    payload?.token ??
-    payload?.access_token ??
-    payload?.jwt ??
-    payload?.Token ??
-    payload?.data?.token ??
-    payload?.data?.access_token ??
-    payload?.data?.jwt ??
-    payload?.dados?.token ??
-    null;
-
-  const userData =
-    getFirstObject(
-      payload?.user,
-      payload?.usuario,
-      payload?.aluno,
-      payload?.data?.user,
-      payload?.data?.usuario,
-      payload?.data?.aluno,
-      payload?.dados,
-      payload?.result,
-      payload?.data
-    ) || (typeof payload === "object" && !Array.isArray(payload) ? payload : {});
-
-  const normalizedUser = { ...userData };
-
-  if (extra && Object.keys(extra).length > 0) {
-    Object.assign(normalizedUser, extra);
-  }
-
-  if (trimmedMatricula && !normalizedUser.matricula) {
-    normalizedUser.matricula = trimmedMatricula;
-  }
-
-  if (token) {
-    normalizedUser.token = token;
-  }
-
-  return normalizedUser;
-};
-
-const AuthContext = createContext();
+const AuthContext = createContext({
+  user: null,
+  signIn: async () => {},
+  signOut: () => {},
+  requestPasswordReset: async () => {},
+  updateProfile: async () => {},
+});
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  const login = async (payload = {}) => {
-    // Allow hydrating from a stored payload (no password)
-    if (!payload?.password) {
-      const normalizedFromPayload = normalizeAuthPayload(payload);
-
-      if (!normalizedFromPayload || Object.keys(normalizedFromPayload).length === 0) {
-        throw new Error("Informe RA e senha válidos.");
-      }
-
-      setUser(normalizedFromPayload);
-      return normalizedFromPayload;
-    }
-
-    const { matricula, password, ...rest } = payload;
-
-    if (!matricula || !password) {
-      throw new Error("Informe RA e senha válidos.");
-    }
-
-    const trimmedMatricula = typeof matricula === "string" ? matricula.trim() : matricula;
-
-    const response = await apiLogin({ matricula: trimmedMatricula, password });
-
-    const normalizedUser = normalizeAuthPayload(response, {
-      matricula: trimmedMatricula,
-      extra: rest,
-    });
-
-    if (!normalizedUser || Object.keys(normalizedUser).length === 0) {
-      throw new Error("Não foi possível autenticar.");
-    }
-
-    setUser(normalizedUser);
-    return normalizedUser;
+  const signIn = async ({ matricula, password }) => {
+    const session = await login({ matricula, password });
+    setUser(session);
+    return session;
   };
 
-  const logout = () => setUser(null);
-
-  const updateEmail = async (email) => {
-    const current = user;
-    if (!current || !current.token) {
-      throw new Error("Sessão inválida. Faça login novamente.");
-    }
-    if (!email) {
-      throw new Error("Informe um e-mail válido.");
-    }
-    const userId = current?.id ?? current?.userId ?? current?.idUser ?? current?.usuarioId;
-    if (userId == null) {
-      throw new Error("ID do usuário não encontrado na sessão.");
-    }
-
-    const resp = await updateUserById({ userId, email, token: current.token });
-
-    const nextEmail = resp?.email || resp?.data?.email || email;
-    const nextUser = { ...current, email: nextEmail };
-    setUser(nextUser);
-    return { email: nextEmail, raw: resp };
+  const signOut = () => {
+    setUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, updateEmail }}>
-      {children}
-    </AuthContext.Provider>
+  const handlePasswordReset = async (email) => {
+    await requestPasswordReset(email);
+  };
+
+  const handleUpdateProfile = async (payload) => {
+    if (!user?.token) {
+      throw new Error("Sessão expirada. Faça login novamente.");
+    }
+    const updated = await updateProfileApi({ token: user.token, ...payload });
+    setUser((prev) => ({ ...prev, ...updated }));
+    return updated;
+  };
+
+  const value = useMemo(
+    () => ({
+      user,
+      signIn,
+      signOut,
+      requestPasswordReset: handlePasswordReset,
+      updateProfile: handleUpdateProfile,
+      refreshProfile: async () => {
+        if (!user?.token) return null;
+        const profile = await fetchProfile({ token: user.token });
+        setUser((prev) => ({ ...prev, ...profile }));
+        return profile;
+      },
+    }),
+    [user]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
