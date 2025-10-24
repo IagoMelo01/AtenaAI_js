@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { login as apiLogin } from "../lib/api";
+import { login as apiLogin, updateUserById } from "../lib/api";
 
 const getFirstObject = (...values) => {
   for (const value of values) {
@@ -99,8 +99,24 @@ export function AuthProvider({ children }) {
   const logout = () => setUser(null);
 
   const updateEmail = async (email) => {
-    setUser((prev) => ({ ...prev, email }));
-    return { email };
+    const current = user;
+    if (!current || !current.token) {
+      throw new Error("Sessão inválida. Faça login novamente.");
+    }
+    if (!email) {
+      throw new Error("Informe um e-mail válido.");
+    }
+    const userId = current?.id ?? current?.userId ?? current?.idUser ?? current?.usuarioId;
+    if (userId == null) {
+      throw new Error("ID do usuário não encontrado na sessão.");
+    }
+
+    const resp = await updateUserById({ userId, email, token: current.token });
+
+    const nextEmail = resp?.email || resp?.data?.email || email;
+    const nextUser = { ...current, email: nextEmail };
+    setUser(nextUser);
+    return { email: nextEmail, raw: resp };
   };
 
   return (
