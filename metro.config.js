@@ -1,14 +1,17 @@
-// metro.config.js
-const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const { getDefaultConfig } = require('expo/metro-config');
 
-const config = getDefaultConfig(__dirname);
+const projectRoot = __dirname;
+const config = getDefaultConfig(projectRoot);
 
-// Garante que qualquer pacote resolva SEMPRE a mesma instância de react e jsx-runtime
-config.resolver.extraNodeModules = {
-  ...(config.resolver.extraNodeModules || {}),
-  react: path.resolve(__dirname, 'node_modules/react'),
-  'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+config.resolver = {
+  ...(config.resolver || {}),
+  extraNodeModules: {
+    ...(config.resolver?.extraNodeModules || {}),
+    react: path.resolve(projectRoot, 'node_modules/react'),
+    'react/jsx-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-runtime.js'),
+    'react/jsx-dev-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-dev-runtime.js'),
+  },
 };
 
 module.exports = config;
