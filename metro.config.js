@@ -7,11 +7,6 @@ const modulesRoot = path.join(projectRoot, 'node_modules');
 
 const config = getDefaultConfig(projectRoot);
 
-// Evita que o Metro procure módulos em node_modules aninhados e, assim, carregue
-// versões duplicadas do React quando bibliotecas internas incluem uma cópia própria.
-config.resolver.disableHierarchicalLookup = true;
-config.resolver.nodeModulesPaths = [modulesRoot];
-
 // Garante que qualquer pacote resolva SEMPRE a mesma instância do React e runtimes JSX
 // utilizados pelo aplicativo, mesmo em builds de produção.
 config.resolver.extraNodeModules = {
