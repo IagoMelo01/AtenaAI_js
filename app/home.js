@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import ScreenBackground from "../components/layout/ScreenBackground";
 import HomeHeader from "../components/home/HomeHeader";
 import HomeHeroSection from "../components/home/HomeHeroSection";
@@ -10,7 +10,7 @@ import { COLORS } from "../constants/colors";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Home() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuth();
 
   const displayName = useMemo(() => {
@@ -33,9 +33,9 @@ export default function Home() {
         style={styles.background}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <HomeHeader onPressProfile={() => router.push("/profile")} />
+          <HomeHeader onPressProfile={() => navigation.navigate("Profile")} />
 
-          <HomeHeroSection displayName={displayName} onPressChat={() => router.push("/chat")} />
+          <HomeHeroSection displayName={displayName} onPressChat={() => navigation.navigate("Chat")} />
 
           <HomeFooter
             termsUrl="https://atenas.edu.br/Atena/termos-uso"

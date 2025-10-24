@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import ScreenBackground from "../components/layout/ScreenBackground";
 import AuthCard from "../components/auth/AuthCard";
 import GradientButton from "../components/ui/GradientButton";
@@ -19,7 +19,7 @@ import { COLORS } from "../constants/colors";
 const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
 
 export default function ForgotPassword({ onSendReset, backgroundImage }) {
-  const router = useRouter();
+  const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -133,7 +133,10 @@ export default function ForgotPassword({ onSendReset, backgroundImage }) {
                 textStyle={styles.btnText}
               />
 
-              <TouchableOpacity onPress={() => router.replace("/")} style={styles.backWrapper}>
+              <TouchableOpacity
+                onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Login"))}
+                style={styles.backWrapper}
+              >
                 <Text style={styles.backLink}>Voltar para o login</Text>
               </TouchableOpacity>
             </AuthCard>

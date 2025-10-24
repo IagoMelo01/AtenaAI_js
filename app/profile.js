@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Linking, ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import ScreenBackground from "../components/layout/ScreenBackground";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileInfoCard from "../components/profile/ProfileInfoCard";
@@ -12,7 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 const SUPPORT_URL = "https://wa.me/3833651164";
 
 export default function ProfileScreen() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const { user, updateEmail, logout } = useAuth();
 
   const [email, setEmail] = useState(user?.email ? String(user.email) : "");
@@ -22,12 +22,10 @@ export default function ProfileScreen() {
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    if (!user) {
-      router.replace("/");
-      return;
+    if (user) {
+      setEmail(user.email ? String(user.email) : "");
     }
-    setEmail(user.email ? String(user.email) : "");
-  }, [router, user]);
+  }, [user]);
 
   const infoItems = useMemo(
     () =>
@@ -64,11 +62,14 @@ export default function ProfileScreen() {
     try {
       setLoggingOut(true);
       logout();
-      router.replace("/");
     } finally {
       setLoggingOut(false);
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -79,7 +80,7 @@ export default function ProfileScreen() {
         style={styles.background}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <ProfileHeader onBack={() => router.back()} />
+          <ProfileHeader onBack={() => navigation.goBack()} />
 
           <ProfileInfoCard
             infoItems={infoItems}

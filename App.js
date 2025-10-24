@@ -1,21 +1,66 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import "expo-router/entry";
+import React, { useMemo } from 'react';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-export default function App() {
+import LoginAtena from './app/LoginAtena';
+import ForgotPasswordView from './app/ForgotPassword';
+import HomeScreen from './app/home';
+import ProfileScreen from './app/profile';
+import ChatScreen from './app/chat';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { forgotPassword } from './lib/api';
+
+const Stack = createNativeStackNavigator();
+
+function LoginScreen() {
+  const { login } = useAuth();
+
+  return <LoginAtena onLogin={login} />;
+}
+
+function ForgotPasswordScreen() {
+  const sendReset = (email) => forgotPassword({ email });
+  return <ForgotPasswordView onSendReset={sendReset} />;
+}
+
+function RootNavigator() {
+  const { user } = useAuth();
+
+  const navigationTheme = useMemo(() => ({
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: 'black',
+    },
+  }), []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer theme={navigationTheme}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        key={user ? 'app-stack' : 'auth-stack'}
+      >
+        {user ? (
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  );
+}

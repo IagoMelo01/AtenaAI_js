@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import { COLORS } from "../constants/colors";
 import ScreenBackground from "../components/layout/ScreenBackground";
@@ -16,7 +16,7 @@ export default function LoginAtena({
   termsUrl = "https://atenas.edu.br/Atena/termos-uso",
   privacyUrl = "https://atenas.edu.br/Atena/politica-privacidade",
 }) {
-  const router = useRouter();
+  const navigation = useNavigation();
   const { login: authLogin } = useAuth();
 
   const [matricula, setMatricula] = useState("");
@@ -42,7 +42,6 @@ export default function LoginAtena({
       const submit = typeof onLogin === "function" ? onLogin : authLogin;
 
       await submit(credentials);
-      router.replace("/home");
     } catch (e) {
       setError(e?.message || "Não foi possível entrar. Tente novamente.");
     } finally {
@@ -52,7 +51,7 @@ export default function LoginAtena({
 
   const handleForgotPassword = () => {
     onForgotPassword?.();
-    router.push("/forgot");
+    navigation.navigate("ForgotPassword");
   };
 
   return (
