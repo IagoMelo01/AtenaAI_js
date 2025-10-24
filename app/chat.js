@@ -1,102 +1,208 @@
-import React, { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Platform,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
+import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import WebView from "react-native-webview";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useAuth } from "../contexts/AuthContext";
 
-const COLORS = {
-    azul: "#0451b8",
-    laranja: "#f47500",
-    overlay: "rgba(0,0,0,0.8)",
-};
+const INITIAL_MESSAGES = [
+  {
+    id: "1",
+    from: "support",
+    text: "Olá! Como posso ajudar hoje?",
+    timestamp: "08:30",
+  },
+];
 
-const CHAT_URL = "https://admin.toolzz.ai/embed/93e14a39-37e0-47fb-8e7d-18240b71de19";
+export default function ChatScreen() {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [message, setMessage] = useState("");
 
-const isAndroid = Platform.OS === "android";
-const withGap = (value) => (isAndroid ? {} : { gap: value });
+  if (!user) {
+    return <Redirect href="/" />;
+  }
 
-export default function Chat() {
-    const router = useRouter();
-    const webViewRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [canGoBack, setCanGoBack] = useState(false);
+  const conversation = useMemo(
+    () =>
+      messages.map((item) => ({
+        ...item,
+        role: item.from === "support" ? "Atendente" : user.name.split(" ")[0],
+      })),
+    [messages, user]
+  );
 
-    const handleBack = () => {
-        if (canGoBack && webViewRef.current) {
-            webViewRef.current.goBack();
-            return;
-        }
-        router.back();
+  const handleSend = () => {
+    if (!message.trim()) return;
+
+    const userMessage = {
+      id: `${Date.now()}-user`,
+      from: "user",
+      text: message.trim(),
+      timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
     };
 
-    return (
-        <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={[COLORS.azul, COLORS.laranja]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={22} color="#fff" />
-                    <Text style={styles.backText}>{canGoBack ? "Voltar" : "Fechar"}</Text>
-                </TouchableOpacity>
-                <Text style={styles.title}>Chat Atena</Text>
-                <View style={styles.headerSpacer} />
-            </LinearGradient>
+    const supportReply = {
+      id: `${Date.now()}-support`,
+      from: "support",
+      text: "Recebemos sua mensagem e entraremos em contato em breve!",
+      timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    };
 
-            <View style={styles.webContainer}>
-                <WebView
-                    ref={(ref) => { webViewRef.current = ref; }}
-                    source={{ uri: CHAT_URL }}
-                    onLoadStart={() => setLoading(true)}
-                    onLoadEnd={() => setLoading(false)}
-                    onNavigationStateChange={(event) => setCanGoBack(event.canGoBack)}
-                    startInLoadingState
-                    style={styles.webview}
-                />
+    setMessages((prev) => [...prev, userMessage, supportReply]);
+    setMessage("");
+  };
 
-                {loading && (
-                    <View style={styles.loadingOverlay} pointerEvents="none">
-                        <LinearGradient
-                            colors={[COLORS.overlay, COLORS.overlay]}
-                            style={StyleSheet.absoluteFillObject}
-                        />
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={styles.loadingText}>Carregando chat…</Text>
-                    </View>
-                )}
-            </View>
-        </SafeAreaView>
-    );
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.select({ ios: "padding", default: undefined })}
+        keyboardVerticalOffset={Platform.select({ ios: 80, android: 0 })}
+      >
+        <FlatList
+          data={conversation}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => {
+            const isUser = item.from === "user";
+            return (
+              <View
+                style={[styles.message, isUser ? styles.messageUser : styles.messageSupport]}
+              >
+                <Text
+                  style={[styles.messageRole, !isUser && styles.messageRoleSupport]}
+                >
+                  {item.role}
+                </Text>
+                <Text
+                  style={[styles.messageText, !isUser && styles.messageTextSupport]}
+                >
+                  {item.text}
+                </Text>
+                <Text
+                  style={[styles.messageTimestamp, !isUser && styles.messageTimestampSupport]}
+                >
+                  {item.timestamp}
+                </Text>
+              </View>
+            );
+          }}
+        />
+
+        <View style={styles.inputRow}>
+          <TextInput
+            value={message}
+            onChangeText={setMessage}
+            style={styles.input}
+            placeholder="Digite sua mensagem"
+            placeholderTextColor="#9CA3AF"
+            multiline
+            maxLength={280}
+          />
+          <Pressable
+            style={({ pressed }) => [styles.sendButton, pressed && styles.sendButtonPressed]}
+            onPress={handleSend}
+          >
+            <Text style={styles.sendText}>Enviar</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#000" },
-    header: {
-        height: 56,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-    },
-    backButton: { flexDirection: "row", alignItems: "center", ...withGap(4) },
-    backText: { color: "#fff", fontSize: 16, fontWeight: "600", marginLeft: isAndroid ? 4 : 0 },
-    title: { color: "#fff", fontSize: 18, fontWeight: "700" },
-    headerSpacer: { width: 60 },
-    webContainer: { flex: 1, backgroundColor: "#000" },
-    webview: { flex: 1 },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        alignItems: "center",
-        justifyContent: "center",
-        ...withGap(12),
-    },
-    loadingText: { color: "#fff", fontSize: 14, fontWeight: "500", marginTop: isAndroid ? 12 : 0 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F5F7FB",
+  },
+  flex: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+  },
+  message: {
+    borderRadius: 14,
+    padding: 14,
+    maxWidth: "85%",
+    marginBottom: 12,
+  },
+  messageUser: {
+    alignSelf: "flex-end",
+    backgroundColor: "#0B4FA2",
+  },
+  messageSupport: {
+    alignSelf: "flex-start",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  messageRole: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.8)",
+    marginBottom: 4,
+  },
+  messageRoleSupport: {
+    color: "#2563EB",
+  },
+  messageText: {
+    fontSize: 15,
+    color: "#ffffff",
+  },
+  messageTextSupport: {
+    color: "#1F2937",
+  },
+  messageTimestamp: {
+    marginTop: 8,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+  },
+  messageTimestampSupport: {
+    color: "#6B7280",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    padding: 16,
+    backgroundColor: "#ffffff",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#E5E7EB",
+  },
+  input: {
+    flex: 1,
+    minHeight: 48,
+    maxHeight: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#1F2937",
+  },
+  sendButton: {
+    backgroundColor: "#0B4FA2",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginLeft: 12,
+  },
+  sendButtonPressed: {
+    opacity: 0.85,
+  },
+  sendText: {
+    color: "#ffffff",
+    fontWeight: "700",
+  },
 });

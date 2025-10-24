@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,86 +14,59 @@ import { Link, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 
-const INITIAL_FORM = { matricula: "", password: "" };
-
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { signIn, user } = useAuth();
-  const [form, setForm] = useState(INITIAL_FORM);
+  const { requestPasswordReset } = useAuth();
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleSubmit = async () => {
     if (submitting) return;
-    setErrorMessage("");
 
-    if (!form.matricula.trim() || !form.password.trim()) {
-      setErrorMessage("Informe matrícula e senha.");
+    if (!email.trim()) {
+      setErrorMessage("Informe um e-mail cadastrado.");
       return;
     }
 
     try {
+      setErrorMessage("");
       setSubmitting(true);
-      await signIn({
-        matricula: form.matricula.trim(),
-        password: form.password,
-      });
-      setForm(INITIAL_FORM);
-      router.replace("/home");
+      await requestPasswordReset(email.trim());
+      Alert.alert(
+        "E-mail enviado",
+        "Enviamos um link de redefinição de senha para o seu endereço de e-mail."
+      );
+      router.back();
     } catch (error) {
-      setErrorMessage(error.message || "Não foi possível entrar.");
+      setErrorMessage(error.message || "Não foi possível enviar o e-mail.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      router.replace("/home");
-    }
-  }, [router, user]);
-
-  if (user) {
-    return null;
-  }
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        style={styles.wrapper}
         behavior={Platform.select({ ios: "padding", default: undefined })}
+        style={styles.wrapper}
       >
-        <View style={styles.header}>
-          <Text style={styles.brand}>Atena</Text>
-          <Text style={styles.subtitle}>Portal acadêmico</Text>
-        </View>
+        <View style={styles.card}>
+          <Text style={styles.title}>Recuperar acesso</Text>
+          <Text style={styles.description}>
+            Digite o e-mail cadastrado para receber o link de redefinição de senha.
+          </Text>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Matrícula</Text>
+          <Text style={styles.label}>E-mail institucional</Text>
           <TextInput
-            value={form.matricula}
-            onChangeText={(value) => handleChange("matricula", value)}
+            value={email}
+            onChangeText={setEmail}
             style={styles.input}
-            placeholder="00000000"
-            placeholderTextColor="#7A869A"
             autoCapitalize="none"
-            keyboardType="number-pad"
-            returnKeyType="next"
-          />
-
-          <Text style={[styles.label, styles.labelSpacing]}>Senha</Text>
-          <TextInput
-            value={form.password}
-            onChangeText={(value) => handleChange("password", value)}
-            style={styles.input}
-            placeholder="••••••••"
+            keyboardType="email-address"
+            placeholder="aluno@atenas.edu.br"
             placeholderTextColor="#7A869A"
-            secureTextEntry
-            returnKeyType="done"
+            returnKeyType="send"
             onSubmitEditing={handleSubmit}
           />
 
@@ -106,12 +80,12 @@ export default function LoginScreen() {
             {submitting ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
+              <Text style={styles.buttonText}>Enviar link</Text>
             )}
           </Pressable>
 
-          <Link href="/forgot-password" style={styles.link}>
-            Esqueci minha senha
+          <Link href="/" style={styles.link}>
+            Voltar para o login
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -129,36 +103,32 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: "center",
   },
-  header: {
-    marginBottom: 40,
-  },
-  brand: {
-    fontSize: 42,
-    fontWeight: "700",
-    color: "#ffffff",
-  },
-  subtitle: {
-    fontSize: 18,
-    color: "rgba(255,255,255,0.85)",
-    marginTop: 8,
-  },
-  form: {
+  card: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
     padding: 24,
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 4,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#0B4FA2",
+  },
+  description: {
+    marginTop: 8,
+    fontSize: 15,
+    color: "#4B5563",
+    lineHeight: 20,
+  },
   label: {
+    marginTop: 24,
     fontSize: 14,
     fontWeight: "600",
     color: "#1F2937",
-  },
-  labelSpacing: {
-    marginTop: 16,
   },
   input: {
     marginTop: 8,
@@ -184,7 +154,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#ffffff",
-    letterSpacing: 0.5,
   },
   link: {
     marginTop: 18,

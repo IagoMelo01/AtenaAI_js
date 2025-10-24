@@ -1,259 +1,249 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
-    View,
-    Text,
-    Image,
-    ImageBackground,
-    TouchableOpacity,
-    StyleSheet,
-    StatusBar,
-    Linking,
-    Platform,
-    ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
-import { Feather } from "@expo/vector-icons";
+import { fetchHomeSummary } from "../lib/api";
 
-const COLORS = {
-    azul: "#0451b8",
-    laranja: "#f47500",
-    verde: "#098419",
-    overlay: "rgba(0,0,0,0.65)",
-};
+export default function HomeScreen() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-const isAndroid = Platform.OS === "android";
-const withGap = (value) => (isAndroid ? {} : { gap: value });
+  useEffect(() => {
+    if (!user) return;
 
-export default function Home() {
-    const router = useRouter();
-    const { user } = useAuth();
+    const load = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchHomeSummary({ token: user.token });
+        setSummary(data);
+      } catch (error) {
+        setErrorMessage(error.message || "Não foi possível carregar o painel.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const tempName =
-        (user?.name && String(user.name).trim()) ||
-        (user?.nome && String(user.nome).trim()) ||
-        (user?.matricula && String(user.matricula).trim()) ||
-        (user?.email && String(user.email).trim()) ||
-        null;
+    load();
+  }, [user]);
 
-    const displayName = tempName?.split(" ")[0];
+  if (!user) {
+    return <Redirect href="/" />;
+  }
 
-    return (
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
-            <StatusBar barStyle="light-content" />
-            <ImageBackground
-                source={require("../assets/images/background.jpg")}
-                resizeMode="cover"
-                style={styles.background}
-            >
-                <LinearGradient
-                    colors={[COLORS.overlay, COLORS.overlay]}
-                    style={StyleSheet.absoluteFillObject}
-                />
+  const quickActions = [
+    {
+      label: "Meu perfil",
+      description: "Dados pessoais e acadêmicos",
+      onPress: () => router.push("/profile"),
+    },
+    {
+      label: "Chat com suporte",
+      description: "Fale com a central Atena",
+      onPress: () => router.push("/chat"),
+    },
+  ];
 
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={styles.header}>
-                        <Image
-                            source={require("../assets/images/logo.png")}
-                            style={styles.logo}
-                            resizeMode="contain"
-                        />
-                        <TouchableOpacity
-                            accessibilityRole="button"
-                            accessibilityLabel="Abrir meus dados"
-                            onPress={() => router.push("/profile")}
-                            activeOpacity={0.85}
-                            style={styles.profileIconButton}
-                        >
-                            <Feather name="user" size={26} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Olá, {user.name.split(" ")[0]} 👋</Text>
+          <Text style={styles.subtitle}>Seja bem-vindo(a) ao seu painel acadêmico.</Text>
+        </View>
+        <Pressable style={styles.logoutButton} onPress={signOut}>
+          <Text style={styles.logoutText}>Sair</Text>
+        </Pressable>
+      </View>
 
-                    <View style={styles.hero}>
-                        <LinearGradient
-                            colors={[COLORS.azul, COLORS.laranja]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.heroTitleWrapper}
-                        >
-                            <Text style={styles.heroTitle}>Conheça Atena</Text>
-                        </LinearGradient>
-                        {displayName && (
-                            <Text style={styles.welcomeText}>Olá, {displayName}!</Text>
-                        )}
-                        <Text style={styles.heroSubtitle}>
-                            Sua nova tutora 24 horas. Educação do futuro, hoje.
-                        </Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0B4FA2" />
+        </View>
+      ) : errorMessage ? (
+        <View style={styles.errorCard}>
+          <Text style={styles.errorTitle}>Ops!</Text>
+          <Text style={styles.errorMessage}>{errorMessage}</Text>
+        </View>
+      ) : summary ? (
+        <View style={styles.cardsContainer}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Próxima aula</Text>
+            <Text style={styles.cardHighlight}>{summary.nextClass.title}</Text>
+            <Text style={styles.cardDetail}>{summary.nextClass.when}</Text>
+            <Text style={styles.cardDetail}>{summary.nextClass.location}</Text>
+          </View>
 
-                        <View style={styles.imageWrapper}>
-                            <Image
-                                source={require("../assets/images/atena.jpg")}
-                                style={styles.heroImage}
-                            />
-                        </View>
+          <View style={[styles.card, styles.cardSpacing]}>
+            <Text style={styles.cardTitle}>Avisos recentes</Text>
+            {summary.notices.length === 0 ? (
+              <Text style={styles.cardDetail}>Tudo certo por aqui!</Text>
+            ) : (
+              summary.notices.map((notice) => (
+                <View key={notice.id} style={styles.noticeItem}>
+                  <Text style={styles.noticeTitle}>{notice.title}</Text>
+                  <Text style={styles.noticeDescription}>{notice.description}</Text>
+                </View>
+              ))
+            )}
+          </View>
+        </View>
+      ) : null}
 
-                        <TouchableOpacity
-                            activeOpacity={0.9}
-                            onPress={() => router.push("/chat")}
-                            style={styles.ctaWrapper}
-                        >
-                            <LinearGradient
-                                colors={[COLORS.azul, COLORS.laranja]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.cta}
-                            >
-                                <Text style={styles.ctaText}>Conversar Agora</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>
-                            © 2025 Faculdade Atenas. Transformando a educação com tecnologia.
-                        </Text>
-                        <View style={styles.legalRow}>
-                            <TouchableOpacity onPress={() => Linking.openURL("https://atenas.edu.br/Atena/termos-uso")}>
-                                <Text style={styles.link}>Termos de Uso</Text>
-                            </TouchableOpacity>
-                            <Text style={styles.dot}>•</Text>
-                            <TouchableOpacity onPress={() => Linking.openURL("https://atenas.edu.br/Atena/politica-privacidade")}>
-                                <Text style={styles.link}>Política de Privacidade</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </ScrollView>
-            </ImageBackground>
-        </SafeAreaView>
-    );
+      <Text style={styles.sectionTitle}>Acessos rápidos</Text>
+      <FlatList
+        data={quickActions}
+        keyExtractor={(item) => item.label}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickList}
+        renderItem={({ item }) => (
+          <Pressable
+            style={({ pressed }) => [styles.quickItem, pressed && styles.quickItemPressed]}
+            onPress={item.onPress}
+          >
+            <Text style={styles.quickTitle}>{item.label}</Text>
+            <Text style={styles.quickDescription}>{item.description}</Text>
+          </Pressable>
+        )}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: "#000" },
-    background: { flex: 1 },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: 0,
-        paddingBottom: Platform.OS === "ios" ? 32 : 24,
-    },
-    header: {
-        padding: 10,
-        margin: 0,
-        marginBottom: 24,
-        width: '100%',
-        display: "flex",
-        paddingTop: Platform.OS === "ios" ? 24 : 16,
-        paddingBottom: 24,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
-    },
-    logo: { height: 40, width: 160 },
-    profileIconButton: {
-        height: 44,
-        width: 44,
-        borderRadius: 22,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.4)",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(4,81,184,0.25)",
-    },
-    hero: {
-        alignItems: "center",
-        paddingHorizontal: 20,
-        ...withGap(20),
-    },
-    heroTitleWrapper: {
-        paddingVertical: 8,
-        paddingHorizontal: 32,
-        borderRadius: 999,
-        marginBottom: 16,
-    },
-    heroTitle: {
-        color: "#fff",
-        fontSize: 32,
-        fontWeight: "800",
-        textAlign: "center",
-        letterSpacing: 0.5,
-    },
-    welcomeText: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "600",
-        textAlign: "center",
-        marginTop: 12,
-        marginBottom: 8,
-    },
-    heroSubtitle: {
-        color: "#fff",
-        opacity: 0.9,
-        textAlign: "center",
-        fontSize: 16,
-        lineHeight: 22,
-        maxWidth: 420,
-        marginTop: 8,
-        marginBottom: 20,
-    },
-    imageWrapper: {
-        borderWidth: 3,
-        borderColor: COLORS.verde,
-        borderRadius: 24,
-        overflow: "hidden",
-        marginTop: 16,
-        marginBottom: 24,
-    },
-    heroImage: {
-        width: 240,
-        height: 360,
-        resizeMode: "cover",
-    },
-    ctaWrapper: {
-        width: "100%",
-        marginTop: 24,
-    },
-    cta: {
-        paddingVertical: 14,
-        borderRadius: 28,
-        alignItems: "center",
-    },
-    ctaText: {
-        color: "#fff",
-        fontWeight: "700",
-        fontSize: 16,
-        letterSpacing: 1,
-        textTransform: "uppercase",
-    },
-    footer: {
-        marginTop: 40,
-        alignItems: "center",
-        marginBottom: 100,
-        ...withGap(12),
-    },
-    footerText: {
-        color: "#fff",
-        opacity: 0.8,
-        fontSize: 12,
-        textAlign: "center",
-        paddingHorizontal: 12,
-        marginBottom: 12,
-    },
-    legalRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        ...withGap(12),
-    },
-    link: {
-        color: COLORS.laranja,
-        textDecorationLine: "underline",
-        fontSize: 13,
-        marginHorizontal: 6,
-    },
-    dot: { color: "#fff", opacity: 0.7, marginHorizontal: 6 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F5F7FB",
+    padding: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#0B4FA2",
+  },
+  subtitle: {
+    marginTop: 4,
+    color: "#4B5563",
+  },
+  logoutButton: {
+    backgroundColor: "#E0E7FF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  logoutText: {
+    color: "#1D4ED8",
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    marginTop: 40,
+    alignItems: "center",
+  },
+  errorCard: {
+    marginTop: 32,
+    padding: 20,
+    borderRadius: 14,
+    backgroundColor: "#FEE2E2",
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#B91C1C",
+  },
+  errorMessage: {
+    marginTop: 6,
+    color: "#7F1D1D",
+    lineHeight: 20,
+  },
+  cardsContainer: {
+    marginTop: 24,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  cardSpacing: {
+    marginTop: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  cardHighlight: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 8,
+    color: "#0B4FA2",
+  },
+  cardDetail: {
+    marginTop: 6,
+    color: "#4B5563",
+  },
+  noticeItem: {
+    marginTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#E5E7EB",
+    paddingTop: 12,
+  },
+  noticeTitle: {
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  noticeDescription: {
+    color: "#4B5563",
+    marginTop: 4,
+  },
+  sectionTitle: {
+    marginTop: 32,
+    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  quickList: {
+    paddingRight: 12,
+  },
+  quickItem: {
+    width: 220,
+    marginRight: 12,
+    backgroundColor: "#0B4FA2",
+    borderRadius: 16,
+    padding: 18,
+  },
+  quickItemPressed: {
+    opacity: 0.85,
+  },
+  quickTitle: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  quickDescription: {
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 8,
+    lineHeight: 18,
+  },
 });
