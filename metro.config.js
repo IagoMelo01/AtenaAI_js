@@ -14,7 +14,6 @@ config.resolver.extraNodeModules = {
   react: path.join(modulesRoot, 'react'),
   'react/jsx-runtime': path.join(modulesRoot, 'react/jsx-runtime.js'),
   'react/jsx-dev-runtime': path.join(modulesRoot, 'react/jsx-dev-runtime.js'),
-  '@radix-ui/react-slot': path.join(projectRoot, 'lib/compat/react-slot'),
 };
 
 module.exports = config;
