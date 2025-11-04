@@ -6,22 +6,18 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "workflow": "managed"
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "workflow": "managed"
+      "distribution": "internal"
     },
     "production": {
-      "workflow": "managed",
       "autoIncrement": true
     },
     "apk": {
       "android": {
         "buildType": "apk"
-      },
-      "workflow": "managed"
+      }
     }
   },
   "submit": {
