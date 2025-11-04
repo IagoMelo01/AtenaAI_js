@@ -70,7 +70,7 @@ export default function LoginAtena({
               <TextInput
                 value={matricula}
                 onChangeText={setMatricula}
-                placeholder="RA - aluno"
+                placeholder="RA"
                 placeholderTextColor="#8c8c8c"
                 autoCapitalize="none"
                 style={styles.input}
@@ -158,5 +158,6 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 0,
     right: 0,
+    marginBottom: 50,
   },
 });

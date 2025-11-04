@@ -9,7 +9,7 @@ export default function HomeFooter({ termsUrl, privacyUrl }) {
   return (
     <View style={styles.footer}>
       <Text style={styles.footerText}>
-        © 2025 Faculdade Atenas. Transformando a educação com tecnologia.
+        © 2025 Centro Universitário Atenas. Transformando a educação com tecnologia.
       </Text>
       <AppFooterLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />
     </View>
