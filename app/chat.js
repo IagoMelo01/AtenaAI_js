@@ -1,29 +1,11 @@
 import React, { useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Platform,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import WebView from "react-native-webview";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-
-const COLORS = {
-    azul: "#0451b8",
-    laranja: "#f47500",
-    overlay: "rgba(0,0,0,0.8)",
-};
+import { useNavigation } from "@react-navigation/native";
+import ChatHeader from "../components/chat/ChatHeader";
+import ChatWebView from "../components/chat/ChatWebView";
 
 const CHAT_URL = "https://admin.toolzz.ai/embed/93e14a39-37e0-47fb-8e7d-18240b71de19";
-
-const isAndroid = Platform.OS === "android";
-const withGap = (value) => (isAndroid ? {} : { gap: value });
 
 export default function Chat() {
     const router = useRouter();
@@ -82,25 +64,8 @@ export default function Chat() {
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#000" },
-    header: {
-        height: 56,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-    },
-    backButton: { flexDirection: "row", alignItems: "center", ...withGap(4) },
-    backText: { color: "#fff", fontSize: 16, fontWeight: "600", marginLeft: isAndroid ? 4 : 0 },
-    title: { color: "#fff", fontSize: 18, fontWeight: "700" },
-    headerSpacer: { width: 60 },
-    webContainer: { flex: 1, backgroundColor: "#000" },
-    webview: { flex: 1 },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        alignItems: "center",
-        justifyContent: "center",
-        ...withGap(12),
-    },
-    loadingText: { color: "#fff", fontSize: 14, fontWeight: "500", marginTop: isAndroid ? 12 : 0 },
+  root: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
 });

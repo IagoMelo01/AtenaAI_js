@@ -3,7 +3,7 @@
     "name": "AtenaAI",
     "slug": "AtenaAI",
     "scheme": "atenaai",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,6 +13,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "br.edu.atenas.AtenaAI",
+      "supportsTablet": true,
+      "buildNumber": "1.0.1",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Atena uses your camera so you can capture and send photos or documents inside the AI chat.",
@@ -30,11 +33,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router"
-    ],
     "extra": {
-      "router": {},
       "eas": {
         "projectId": "3bf87d1b-72c4-4f33-a497-efd510ddd287"
       }
