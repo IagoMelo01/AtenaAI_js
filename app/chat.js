@@ -59,6 +59,10 @@ export default function Chat() {
                     onLoadEnd={() => setLoading(false)}
                     onNavigationStateChange={(event) => setCanGoBack(event.canGoBack)}
                     startInLoadingState
+                    mediaPlaybackRequiresUserAction={false}
+                    allowsInlineMediaPlayback
+                    allowsFullscreenVideo
+                    mediaCapturePermissionGrantType="grant"
                     style={styles.webview}
                 />
 
