@@ -16,8 +16,10 @@
       "bundleIdentifier": "br.edu.atenas.AtenaAI",
       "supportsTablet": true,
       "buildNumber": "1.0.1",
+      "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "O Atena precisa acessar a câmera para enviar imagens."
+        "NSCameraUsageDescription": "Atena uses your camera so you can capture and send photos or documents inside the AI chat.",
+        "NSMicrophoneUsageDescription": "Atena uses your microphone to record and send voice messages during the AI chat."
       }
     },
     "android": {
