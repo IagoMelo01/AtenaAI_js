@@ -50,9 +50,6 @@ export default function Chat() {
   const navigation = useNavigation();
   const webViewRef = useRef(null);
   const [canGoBack, setCanGoBack] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [micPermissionStatus, setMicPermissionStatus] = useState("pending");
 
   const handleBack = () => {
     if (canGoBack && webViewRef.current) {
@@ -61,25 +58,6 @@ export default function Chat() {
     }
     navigation.goBack();
   };
-
-  const handleReload = () => {
-    setLoading(true);
-    setReloadKey((prev) => prev + 1);
-  };
-
-  const requestMicPermission = useCallback(async () => {
-    try {
-      const { status } = await requestRecordingPermissionsAsync();
-      setMicPermissionStatus(status === "granted" ? "granted" : "denied");
-    } catch (error) {
-      console.warn("Could not request microphone permission", error);
-      setMicPermissionStatus("denied");
-    }
-  }, []);
-
-  useEffect(() => {
-    requestMicPermission();
-  }, [requestMicPermission]);
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
