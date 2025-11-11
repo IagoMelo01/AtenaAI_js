@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "AtenaAI",
     "slug": "AtenaAI",
@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "buildNumber": "1.0.1",
       "infoPlist": {
-        "NSCameraUsageDescription": "O Atena precisa acessar a câmera para enviar imagens."
+        "NSCameraUsageDescription": "O Atena precisa acessar a câmera para enviar imagens.",
+        "NSMicrophoneUsageDescription": "O microfone é utilizado para enviar mensagens de voz no chat.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,6 +27,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": ["RECORD_AUDIO"],
       "edgeToEdgeEnabled": true,
       "package": "br.edu.atenas.AtenaAI"
     },
