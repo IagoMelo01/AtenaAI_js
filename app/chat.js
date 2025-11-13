@@ -1,50 +1,19 @@
 ﻿import React, { useCallback, useEffect, useRef, useState } from "react";
 import { requestRecordingPermissionsAsync } from "expo-audio";
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { WebView } from "react-native-webview";
 import ChatHeader from "../components/chat/ChatHeader";
-import ChatWebView from "../components/chat/ChatWebView";
 
 const CHAT_ID = "93e14a39-37e0-47fb-8e7d-18240b71de19";
-const CHAT_HTML = `
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      html, body, #tzzai-root { height: 100%; width: 100%; margin: 0; padding: 0; background: #fff; }
-      body { display: flex; justify-content: center; align-items: stretch; overflow: hidden; width: 100vw; }
-      #tzzai-root { width: 100vw; max-width: 100vw; min-height: 100%; }
-    </style>
-    <script>
-      (function () {
-        const mobileUA =
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-        try {
-          Object.defineProperty(navigator, "userAgent", {
-            get: function () {
-              return mobileUA;
-            },
-            configurable: true,
-          });
-        } catch (error) {
-          console.warn("Unable to override userAgent", error);
-        }
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="tzzai-root"></div>
-    <script type="module">
-      import Chatbot from "https://chat-embed.toolzz.ai/dist/web.js";
-      Chatbot.initTzzaiWeb({ id: "${CHAT_ID}" });
-    </script>
-  </body>
-</html>
-`;
+const CHAT_URL = `https://admin.toolzz.ai/embed/${CHAT_ID}`;
 
 export default function Chat() {
   const navigation = useNavigation();
@@ -86,23 +55,54 @@ export default function Chat() {
       <StatusBar barStyle="light-content" />
       <View style={styles.screen}>
         <View style={styles.headerWrapper}>
-          <ChatHeader onBack={handleBack} canGoBack={canGoBack} onReload={handleReload} loading={loading} />
+          <ChatHeader
+            onBack={handleBack}
+            canGoBack={canGoBack}
+            onReload={handleReload}
+            loading={loading}
+          />
         </View>
+
         <View style={styles.body}>
-          <ChatWebView
+          <WebView
             key={`chat-${reloadKey}`}
             ref={webViewRef}
-            html={CHAT_HTML}
-            onCanGoBackChange={setCanGoBack}
-            onLoadChange={setLoading}
+            source={{ uri: CHAT_URL }}
+            onNavigationStateChange={(navState) =>
+              setCanGoBack(navState.canGoBack)
+            }
+            onLoadEnd={() => setLoading(false)}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            allowsInlineMediaPlayback={true}
+            allowsProtectedMedia={true}
+            mediaPlaybackRequiresUserAction={false}
+            geolocationEnabled={true}
+            allowFileAccess={true}
+            androidCameraAccess={true}
+            androidMicrophoneAccess={true}
+            onPermissionRequest={(event) => {
+              // Autoriza o uso de microfone/câmera dentro do WebView (Android)
+              const resources = event.nativeEvent.resources;
+              if (
+                resources.includes("android.webkit.resource.AUDIO_CAPTURE") ||
+                resources.includes("android.webkit.resource.VIDEO_CAPTURE")
+              ) {
+                event.grant();
+              }
+            }}
           />
+
           {micPermissionStatus === "denied" && (
             <View style={styles.permissionOverlay} pointerEvents="box-none">
               <Text style={styles.permissionTitle}>Microfone necessário</Text>
               <Text style={styles.permissionMessage}>
                 Autorize o microfone para que o botão dentro do chat funcione.
               </Text>
-              <TouchableOpacity style={styles.permissionButton} onPress={requestMicPermission}>
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={requestMicPermission}
+              >
                 <Text style={styles.permissionButtonText}>Conceder acesso</Text>
               </TouchableOpacity>
             </View>
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     width: "110%",
+    marginLeft: -15,
     minHeight: 0,
     backgroundColor: "#000",
     position: "relative",

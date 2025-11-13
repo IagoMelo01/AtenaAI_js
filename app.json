@@ -3,7 +3,7 @@
     "name": "AtenaAI",
     "slug": "AtenaAI",
     "scheme": "atenaai",
-    "version": "1.0.1",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,11 +15,21 @@
     "ios": {
       "bundleIdentifier": "br.edu.atenas.AtenaAI",
       "supportsTablet": true,
-      "buildNumber": "1.0.1",
-      "supportsTablet": true,
+      "buildNumber": "1.1.1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Atena uses your camera so you can capture and send photos or documents inside the AI chat.",
-        "NSMicrophoneUsageDescription": "Atena uses your microphone to record and send voice messages during the AI chat."
+        "NSCameraUsageDescription": "AtenaAI precisa acessar sua câmera para tirar fotos ou digitalizar documentos e enviá-los na conversa com a IA. Ex.: fotografar um exercício para correção.",
+        "NSMicrophoneUsageDescription": "AtenaAI precisa acessar o microfone para gravar sua voz e enviar mensagens de áudio na conversa com a IA. O áudio só é capturado quando você tocar no botão de gravar.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "locales": {
+        "en": {
+          "NSCameraUsageDescription": "AtenaAI needs camera access so you can capture photos or scan documents and share them in the AI chat. Example: taking a picture of an assignment for feedback.",
+          "NSMicrophoneUsageDescription": "AtenaAI needs microphone access to record your voice and send audio messages in the AI chat. Audio is captured only while you hold the record button."
+        },
+        "pt-BR": {
+          "NSCameraUsageDescription": "AtenaAI precisa acessar sua câmera para tirar fotos ou digitalizar documentos e enviá-los na conversa com a IA. Ex.: fotografar um exercício para correção.",
+          "NSMicrophoneUsageDescription": "AtenaAI precisa acessar o microfone para gravar sua voz e enviar mensagens de áudio na conversa com a IA. O áudio só é capturado quando você tocar no botão de gravar."
+        }
       }
     },
     "android": {
