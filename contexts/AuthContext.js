@@ -88,8 +88,12 @@ export function AuthProvider({ children }) {
       extra: rest,
     });
 
-    if (!normalizedUser || Object.keys(normalizedUser).length === 0) {
-      throw new Error("Não foi possível autenticar.");
+    if (
+      !normalizedUser ||
+      Object.keys(normalizedUser).length === 0 ||
+      !normalizedUser.token
+    ) {
+      throw new Error("RA e/ou senha incorretos.");
     }
 
     setUser(normalizedUser);

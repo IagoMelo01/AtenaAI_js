@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
@@ -32,7 +32,7 @@ export default function LoginAtena({
   const handleSubmit = async () => {
     setError(null);
     if (!canSubmit) {
-      setError("Preencha RA e senha (mín. 4 caracteres).");
+      setError("Preencha RA e senha (mi­n. 4 caracteres).");
       return;
     }
 
@@ -43,7 +43,8 @@ export default function LoginAtena({
 
       await submit(credentials);
     } catch (e) {
-      setError(e?.message || "Não foi possível entrar. Tente novamente.");
+      console.error("Login error", e);
+      setError("Não foi possível entrar. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -161,3 +162,5 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
 });
+
+

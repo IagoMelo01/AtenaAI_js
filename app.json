@@ -3,7 +3,7 @@
     "name": "AtenaAI",
     "slug": "AtenaAI",
     "scheme": "atenaai",
-    "version": "1.1.1",
+    "version": "1.1.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,7 +15,7 @@
     "ios": {
       "bundleIdentifier": "br.edu.atenas.AtenaAI",
       "supportsTablet": true,
-      "buildNumber": "1.1.1",
+      "buildNumber": "1.1.3",
       "infoPlist": {
         "NSCameraUsageDescription": "AtenaAI precisa acessar sua câmera para tirar fotos ou digitalizar documentos e enviá-los na conversa com a IA. Ex.: fotografar um exercício para correção.",
         "NSMicrophoneUsageDescription": "AtenaAI precisa acessar o microfone para gravar sua voz e enviar mensagens de áudio na conversa com a IA. O áudio só é capturado quando você tocar no botão de gravar.",
