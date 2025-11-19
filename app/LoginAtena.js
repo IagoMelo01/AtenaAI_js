@@ -7,6 +7,23 @@ import ScreenBackground from "../components/layout/ScreenBackground";
 import AuthCard from "../components/auth/AuthCard";
 import GradientButton from "../components/ui/GradientButton";
 import AppFooterLinks from "../components/layout/AppFooterLinks";
+import * as Network from "expo-network";
+
+const OFFLINE_ERROR =
+  "Sem conexão com a internet. Verifique sua rede e tente novamente.";
+
+const getFriendlyLoginError = (error) => {
+  if (!error) return "Não foi possível entrar. Tente novamente.";
+  if (typeof error === "string") return error;
+  if (error.status === 401) {
+    return "RA ou senha incorretos.";
+  }
+  const message = typeof error.message === "string" ? error.message : "";
+  if (message.toLowerCase().includes("timeout")) {
+    return "O servidor demorou para responder. Tente novamente.";
+  }
+  return message || "Não foi possível entrar. Tente novamente.";
+};
 
 export default function LoginAtena({
   onLogin,
@@ -32,8 +49,22 @@ export default function LoginAtena({
   const handleSubmit = async () => {
     setError(null);
     if (!canSubmit) {
-      setError("Preencha RA e senha (mi­n. 4 caracteres).");
+      setError("Preencha RA e senha (mín. 4 caracteres).");
       return;
+    }
+
+    try {
+      const state = await Network.getNetworkStateAsync();
+      if (!state.isConnected || state.isInternetReachable === false) {
+        Alert.alert(
+          "Sem conexão",
+          "Conecte-se à internet antes de tentar fazer login.",
+        );
+        setError(OFFLINE_ERROR);
+        return;
+      }
+    } catch (networkError) {
+      console.warn("Falha ao verificar conectividade", networkError);
     }
 
     try {
@@ -44,7 +75,7 @@ export default function LoginAtena({
       await submit(credentials);
     } catch (e) {
       console.error("Login error", e);
-      setError("Não foi possível entrar. Tente novamente.");
+      setError(getFriendlyLoginError(e));
     } finally {
       setLoading(false);
     }
@@ -86,7 +117,21 @@ export default function LoginAtena({
                 style={styles.input}
               />
 
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? (
+                <>
+                  <Text style={styles.errorText}>{error}</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.retryButton,
+                      (loading || !canSubmit) && styles.retryButtonDisabled,
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={loading || !canSubmit}
+                  >
+                    <Text style={styles.retryButtonText}>Tentar novamente</Text>
+                  </TouchableOpacity>
+                </>
+              ) : null}
 
               <GradientButton
                 title="Entrar"
@@ -153,6 +198,21 @@ const styles = StyleSheet.create({
     color: COLORS.textoErro,
     marginVertical: 6,
     alignSelf: "flex-start",
+  },
+  retryButton: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.laranja,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  retryButtonDisabled: {
+    opacity: 0.6,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
   footer: {
     position: "absolute",
