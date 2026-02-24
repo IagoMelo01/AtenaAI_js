@@ -1,5 +1,15 @@
 ﻿import React, { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert, // ✅ ADICIONAR
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import { COLORS } from "../constants/colors";
@@ -11,6 +21,19 @@ import * as Network from "expo-network";
 
 const OFFLINE_ERROR =
   "Sem conexão com a internet. Verifique sua rede e tente novamente.";
+
+// ✅ DEMO (App Review)
+const APPLE_DEMO_USER = "apple-demo";
+const APPLE_DEMO_PASS = "12345678";
+// Defina um prazo (UTC) para não ficar “aberto pra sempre”
+const APPLE_DEMO_EXPIRES_AT = new Date("2026-01-31T23:59:59.000Z");
+
+const isAppleDemoCredentials = (matricula, password) => {
+  const ra = String(matricula || "").trim().toLowerCase();
+  return ra === APPLE_DEMO_USER && String(password || "") === APPLE_DEMO_PASS;
+};
+
+const isAppleDemoActive = () => new Date() <= APPLE_DEMO_EXPIRES_AT;
 
 const getFriendlyLoginError = (error) => {
   if (!error) return "Não foi possível entrar. Tente novamente.";
@@ -28,6 +51,7 @@ const getFriendlyLoginError = (error) => {
 export default function LoginAtena({
   onLogin,
   onForgotPassword,
+  onDemoLogin, // ✅ NOVO (opcional)
   backgroundImage,
   title = "Login",
   termsUrl = "https://atenas.edu.br/Atena/termos-uso",
@@ -48,34 +72,71 @@ export default function LoginAtena({
 
   const handleSubmit = async () => {
     setError(null);
+
     if (!canSubmit) {
       setError("Preencha RA e senha (mín. 4 caracteres).");
       return;
     }
 
-    try {
-      const state = await Network.getNetworkStateAsync();
-      if (!state.isConnected || state.isInternetReachable === false) {
-        Alert.alert(
-          "Sem conexão",
-          "Conecte-se à internet antes de tentar fazer login.",
-        );
-        setError(OFFLINE_ERROR);
-        return;
+    const credentials = { matricula: matricula.trim(), password };
+    const isDemo = isAppleDemoCredentials(credentials.matricula, credentials.password);
+
+    // ✅ Se for demo e estiver ativo, não bloqueie por falta de internet
+    if (!isDemo) {
+      try {
+        const state = await Network.getNetworkStateAsync();
+        if (!state.isConnected || state.isInternetReachable === false) {
+          Alert.alert(
+            "Sem conexão",
+            "Conecte-se à internet antes de tentar fazer login.",
+          );
+          setError(OFFLINE_ERROR);
+          return;
+        }
+      } catch (networkError) {
+        console.warn("Falha ao verificar conectividade", networkError);
       }
-    } catch (networkError) {
-      console.warn("Falha ao verificar conectividade", networkError);
     }
 
     try {
       setLoading(true);
-      const credentials = { matricula: matricula.trim(), password };
+
       const submit = typeof onLogin === "function" ? onLogin : authLogin;
 
+      // Tenta login real primeiro (mesmo pro demo, se a API estiver OK, melhor)
       await submit(credentials);
+
     } catch (e) {
       console.error("Login error", e);
+
+      //  FALLBACK: Se for demo e dentro do prazo, entra mesmo com erro
+      if (isDemo && isAppleDemoActive()) {
+        try {
+          // 1) Se você passar um handler pra setar um “usuário demo” no AuthContext
+          if (typeof onDemoLogin === "function") {
+            await onDemoLogin({
+              matricula: APPLE_DEMO_USER,
+              name: "Apple Demo",
+              role: "review",
+            });
+          } else {
+            // 2) Ou navega direto (ajuste para sua rota real)
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Home" }], // <-- TROQUE para a sua tela pós-login
+            });
+          }
+          return;
+        } catch (demoErr) {
+          console.error("Demo login fallback failed", demoErr);
+          setError("Não foi possível iniciar o modo demonstração. Tente novamente.");
+          return;
+        }
+      }
+
+      // Normal (não demo)
       setError(getFriendlyLoginError(e));
+
     } finally {
       setLoading(false);
     }
@@ -155,6 +216,9 @@ export default function LoginAtena({
     </View>
   );
 }
+
+// ... seus styles continuam iguais
+
 
 const styles = StyleSheet.create({
   root: {

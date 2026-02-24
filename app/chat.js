@@ -106,14 +106,14 @@ export default function Chat() {
       if (!iosMicAlertShown.current) {
         iosMicAlertShown.current = true;
         Alert.alert(
-          "Permissão para microfone",
-          "O AtenaAI precisará acessar seu microfone para gravar sua voz e enviar mensagens de áudio na conversa com a IA. O áudio só é capturado quando o botão é pressionado.\n\nAtenaAI will need microphone access to record your voice and send audio messages in conversations with the AI. Audio is only captured when you press the button down.",
+          "Permissão para microfone (opcional)",
+          "Se você quiser enviar mensagens de voz para a AtenaAI, o app precisará acessar o seu microfone. \nVocê também pode continuar usando o chat normalmente apenas por texto, sem conceder essa permissão. \nO áudio só é capturado quando você escolhe usar o botão de voz.\n\nIf you want to send voice messages to AtenaAI, the app will need access to your microphone.\nYou can also keep using the chat with text only, without granting this permission.\nAudio is only captured when you choose to use the voice button.",
           [
-            {
-              text: "Cancelar",
-              style: "cancel",
-              onPress: () => setMicPermissionStatus("denied"),
-            },
+            // {
+            //   text: "Cancelar",
+            //   style: "cancel",
+            //   onPress: () => setMicPermissionStatus("denied"),
+            // },
             {
               text: "Continuar",
               onPress: requestMicPermission,
@@ -170,7 +170,7 @@ export default function Chat() {
             }}
           />
 
-          {micPermissionStatus === "denied" && (
+          {/* {micPermissionStatus === "denied" && (
             <View style={styles.permissionOverlay} pointerEvents="box-none">
               <Text style={styles.permissionTitle}>Microfone necessário</Text>
               <Text style={styles.permissionMessage}>
@@ -183,7 +183,7 @@ export default function Chat() {
                 <Text style={styles.permissionButtonText}>Conceder acesso</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
           <TouchableOpacity
             style={styles.reportButton}
             onPress={openReportModal}
