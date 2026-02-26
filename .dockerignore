@@ -1,0 +1,11 @@
+.git
+.gitignore
+.expo
+node_modules
+dist
+android
+ios
+npm-debug.log
+yarn-error.log
+*.local
+*.tmp
