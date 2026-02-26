@@ -1,4 +1,4 @@
-﻿const API_URL = "http://localhost:3333"; // Replace with your actual API URL
+﻿const API_URL = "https://atenaapi.farmevo.com.br/"; // Replace with your actual API URL
 const REQUEST_TIMEOUT_MS = 30000;
 
 function trimTrailingSlashes(value) {
