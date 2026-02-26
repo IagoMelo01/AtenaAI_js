@@ -1,0 +1,10 @@
+services:
+  atenaai-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL}
+    ports:
+      - "8032:8032"
+    restart: unless-stopped
